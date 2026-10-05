@@ -78,6 +78,15 @@ function applyStudyColors(root: THREE.Object3D, exercise: Exercise, detailed = f
   const byId = new Map(exercise.muscles.map((muscle) => [muscle.id, muscle]));
   const normalizeName = (value: string) => value.toLowerCase().replace(/[_\-.]+/g, " ").replace(/\s+/g, " ");
   const allHints = exercise.muscles.flatMap((muscle) => muscle.meshHints.map((hint) => ({ hint: normalizeName(hint), muscle })));
+  let fasciaMeshes = 0;
+  if (detailed && focusMode === "fascia") {
+    root.traverse((object) => {
+      if (object instanceof THREE.Mesh && /fascia|aponeurosis|retinaculum/.test(normalizeName(object.name))) fasciaMeshes += 1;
+    });
+  }
+  // Some exported FBX revisions omit connective-tissue mesh names. In that case,
+  // keep the action muscles visible instead of rendering a nearly empty canvas.
+  const showFascia = focusMode === "fascia" && fasciaMeshes > 0;
   root.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
     const objectName = normalizeName(object.name);
@@ -85,9 +94,9 @@ function applyStudyColors(root: THREE.Object3D, exercise: Exercise, detailed = f
     const hit = detailed
       ? allHints.find(({ hint }) => objectName.includes(hint))?.muscle
       : byId.get(String(object.userData.muscleId));
-    const active = focusMode === "fascia" ? fascial : Boolean(hit);
-    const color = focusMode === "fascia" && fascial ? 0x8ee8df : hit ? ROLE_HEX[hit.role] : detailed ? 0x273632 : 0x75817d;
-    const opacity = active ? .96 : detailed ? .05 : .22;
+    const active = showFascia ? fascial : Boolean(hit);
+    const color = showFascia && fascial ? 0x8ee8df : hit ? ROLE_HEX[hit.role] : detailed ? 0x273632 : 0x58706a;
+    const opacity = active ? .96 : detailed ? .09 : .38;
     const nextMaterial = material(color, opacity);
     if (detailed) {
       nextMaterial.depthWrite = active;
@@ -97,6 +106,7 @@ function applyStudyColors(root: THREE.Object3D, exercise: Exercise, detailed = f
     object.material = nextMaterial;
     object.renderOrder = active ? 10 : 0;
   });
+  return showFascia;
 }
 
 export function AnatomyViewer({ exercise }: Props) {
@@ -106,6 +116,7 @@ export function AnatomyViewer({ exercise }: Props) {
   const [detailed, setDetailed] = useState(false);
   const [showSurface, setShowSurface] = useState(false);
   const [focusMode, setFocusMode] = useState<FocusMode>("muscles");
+  const [fasciaAvailable, setFasciaAvailable] = useState(true);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -139,7 +150,9 @@ export function AnatomyViewer({ exercise }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { if (modelRef.current) applyStudyColors(modelRef.current, exercise, detailed, focusMode); }, [exercise, detailed, focusMode]);
+  useEffect(() => {
+    if (modelRef.current) setFasciaAvailable(applyStudyColors(modelRef.current, exercise, detailed, focusMode));
+  }, [exercise, detailed, focusMode]);
 
   async function loadDetailedModel() {
     const scene = sceneRef.current;
@@ -152,7 +165,7 @@ export function AnatomyViewer({ exercise }: Props) {
       const scale = 4 / Math.max(size.x, size.y, size.z); model.scale.setScalar(scale);
       model.position.copy(center).multiplyScalar(-scale); model.position.y += .5;
       if (modelRef.current) scene.remove(modelRef.current);
-      modelRef.current = model; applyStudyColors(model, exercise, true, focusMode); scene.add(model); setDetailed(true);
+      modelRef.current = model; setFasciaAvailable(applyStudyColors(model, exercise, true, focusMode)); scene.add(model); setDetailed(true);
       if (showSurface) void loadSurface(scene, model, scale, center);
     } catch { setError("精细模型加载失败，可继续使用轻量模型。"); }
     finally { setLoading(false); }
@@ -198,7 +211,7 @@ export function AnatomyViewer({ exercise }: Props) {
       </div>
       <div className="pointer-events-none absolute left-5 top-28 z-10 flex items-center gap-2 text-[11px] text-white/28"><Rotate3D size={14} />拖动旋转 · 滚轮缩放</div>
       {error && <p className="absolute right-4 top-28 z-20 max-w-60 rounded-xl border border-red-300/15 bg-red-950/75 p-3 text-xs text-red-100/70">{error}</p>}
-      {focusMode === "fascia" && <p className="pointer-events-none absolute left-5 top-28 z-10 max-w-64 rounded-xl border border-[#8ee8df]/15 bg-[#08110f]/76 p-3 text-[11px] leading-5 text-[#b8f4ee]/70 backdrop-blur-md">筋膜视图显示模型中名称含 fascia、aponeurosis 或 retinaculum 的结构。它用于定位与学习，不代表某个体态问题的确定病因。</p>}
+      {focusMode === "fascia" && <p className="pointer-events-none absolute left-5 top-28 z-10 max-w-64 rounded-xl border border-[#8ee8df]/15 bg-[#08110f]/76 p-3 text-[11px] leading-5 text-[#b8f4ee]/70 backdrop-blur-md">{fasciaAvailable ? "筋膜视图显示模型中名称含 fascia、aponeurosis 或 retinaculum 的结构。它用于定位与学习，不代表某个体态问题的确定病因。" : "当前 FBX 未提供可单独定位的筋膜网格名称，已自动保留当前动作肌群视图；筋膜不作为体态问题的确定病因。"}</p>}
       <a href="https://github.com/LluisV/Z-Anatomy" target="_blank" rel="noreferrer" className="absolute bottom-20 left-5 z-10 text-[10px] text-white/20 hover:text-white/45">精细模型：Z-Anatomy / BodyParts3D · CC BY-SA</a>
     </div>
   );
