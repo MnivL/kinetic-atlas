@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../vendor/shadcn-tailwind-4.13.0.css";
+
+:root {
+  --background: #07100f; --foreground: #edf5f1; --card: #0b1715; --card-foreground: #edf5f1;
+  --popover: #0b1715; --popover-foreground: #edf5f1; --primary: #b8f55b; --primary-foreground: #08110f;
+  --secondary: #13211e; --secondary-foreground: #dfeae5; --muted: #13211e; --muted-foreground: #83918b;
+  --accent: #193027; --accent-foreground: #edf5f1; --destructive: #ff6b59; --border: #ffffff14;
+  --input: #ffffff18; --ring: #b8f55b; --radius: 0.75rem;
+}
+@theme inline {
+  --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground); --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground); --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground); --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive); --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px); --radius-md: calc(var(--radius) - 2px); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Segoe UI Variable", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { background: #07100f; }
+body { margin: 0; background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+button, input { font: inherit; } button { cursor: pointer; } button:disabled { cursor: default; }
+.workspace-grid { display: grid; grid-template-columns: 260px minmax(430px, 1fr) 340px; height: calc(100vh - 4rem); min-height: 620px; }
+.exercise-rail, .detail-panel { min-height: 0; overflow: hidden; }
+.rail-scroll { height: auto; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff1f transparent; }
+.detail-scroll { height: calc(100% - 137px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff1f transparent; }
+.viewer-stage { background: radial-gradient(circle at 50% 42%, #18362d 0%, #0b1b17 35%, #07100f 73%); }
+.viewer-stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(#ffffff06 1px, transparent 1px), linear-gradient(90deg, #ffffff06 1px, transparent 1px); background-size: 48px 48px; mask-image: radial-gradient(circle at center, black, transparent 72%); }
+.section-label { font-size: 11px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; color: rgb(255 255 255 / 32%); }
+.viewer-control { display: flex; align-items: center; gap: .45rem; min-height: 36px; border: 1px solid rgb(255 255 255 / 10%); border-radius: .75rem; padding: .5rem .75rem; color: rgb(255 255 255 / 64%); background: rgb(8 17 15 / 82%); font-size: 12px; backdrop-filter: blur(10px); transition: border-color .2s, color .2s, background .2s; }
+.viewer-control:hover:not(:disabled) { border-color: rgb(184 245 91 / 45%); color: white; background: rgb(15 31 26 / 92%); }
+.viewer-control:disabled { opacity: .62; }
+@media (max-width: 1050px) {
+  .workspace-grid { grid-template-columns: 220px minmax(430px, 1fr); height: auto; min-height: calc(100vh - 4rem); }
+  .detail-panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid rgb(255 255 255 / 8%); }
+  .detail-scroll { height: auto; max-height: none; }
+}
+@media (max-width: 720px) {
+  .workspace-grid { display: flex; flex-direction: column; }
+  .exercise-rail { order: 2; border-right: 0; border-top: 1px solid rgb(255 255 255 / 8%); }
+  .rail-scroll { display: flex; height: auto; gap: .4rem; overflow-x: auto; padding: 0 .75rem 1rem; }
+  .rail-scroll button { min-width: 225px; margin: 0; }
+  .viewer-stage { order: 1; min-height: 620px; }
+  .detail-panel { order: 3; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; } }
