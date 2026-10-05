@@ -117,7 +117,7 @@ export default function Home() {
               {catalogState === "loading" ? <LoaderCircle className="animate-spin" size={14} /> : <Database size={14} />}
               {catalogState === "ready" ? `公共索引已载入 · ${catalog.length} 条` : catalogState === "loading" ? "正在载入动作索引…" : catalogState === "error" ? "载入失败 · 点击重试" : "载入 1323 动作公共索引"}
             </button>
-            <p className="mt-2 text-[10px] leading-4 text-white/25">仅获取动作元数据；GIF 不打包进本站。</p>
+            <p className="mt-2 text-[10px] leading-4 text-white/25">读取本地动作索引；GIF 按需从本机加载。</p>
           </div>
           <div className="flex items-center justify-between px-4 pb-3 text-xs text-white/35"><span>动作库</span><span>{visibleExercises.length}{filtered.length > visibleExercises.length ? ` / ${filtered.length}` : ""} 项</span></div>
           <nav className="rail-scroll min-h-0 flex-1 px-2 pb-5" aria-label="动作列表">
@@ -150,9 +150,9 @@ export default function Home() {
               <Upload size={14} />导入本地动作 GIF
               <input type="file" accept="image/gif" className="sr-only" onChange={(e) => importMedia(e.target.files?.[0])} />
             </label>
-            {selected.gifUrl && <button onClick={() => setMediaUrl(selected.gifUrl ?? null)} className="flex items-center gap-2 rounded-xl border border-[#f6b84b]/20 bg-[#101c19]/90 px-3 py-2.5 text-xs font-medium text-[#f7cc75] backdrop-blur-md transition hover:border-[#f6b84b]/45"><ExternalLink size={14} />按需查看第三方 GIF</button>}
+            {selected.gifUrl && <button onClick={() => setMediaUrl(selected.gifUrl ?? null)} className="flex items-center gap-2 rounded-xl border border-[#f6b84b]/20 bg-[#101c19]/90 px-3 py-2.5 text-xs font-medium text-[#f7cc75] backdrop-blur-md transition hover:border-[#f6b84b]/45"><ExternalLink size={14} />查看本地 GIF 演示</button>}
           </div>
-          {mediaUrl && <div className="absolute bottom-20 right-4 z-20 overflow-hidden rounded-2xl border border-white/12 bg-black shadow-2xl"><img src={mediaUrl} alt={`${selected.nameZh} 动作演示`} className="h-48 w-48 object-cover" /><button aria-label="关闭动作演示" className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/70 text-white/70" onClick={() => setMediaUrl(null)}><X size={14} /></button>{selected.gifUrl === mediaUrl && <p className="max-w-48 px-3 py-2 text-[9px] leading-4 text-white/38">第三方 CDN 按需加载 · GIF 权利归原作者</p>}</div>}
+          {mediaUrl && <div className="absolute bottom-20 right-4 z-20 overflow-hidden rounded-2xl border border-white/12 bg-black shadow-2xl"><img src={mediaUrl} alt={`${selected.nameZh} 动作演示`} className="h-48 w-48 object-cover" /><button aria-label="关闭动作演示" className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/70 text-white/70" onClick={() => setMediaUrl(null)}><X size={14} /></button>{selected.gifUrl === mediaUrl && <p className="max-w-48 px-3 py-2 text-[9px] leading-4 text-white/38">本地媒体库按需加载 · GIF 权利归原作者</p>}</div>}
         </section>
 
         <aside className="detail-panel border-l border-white/8 bg-[#091412]">

@@ -25,6 +25,8 @@
 # User-provided exercise media is local-only.
 public/media/exercises/*
 !public/media/exercises/.gitkeep
+public/media/anatomy/*
+!public/media/anatomy/.gitkeep
 
 # debug
 npm-debug.log*

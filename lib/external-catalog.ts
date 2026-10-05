@@ -1,6 +1,6 @@
 import type { Exercise, ExerciseMuscle, MuscleRole } from "@/lib/exercise-data";
 
-export const EXERCISE_CATALOG_URL = "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/api/en/exercises.json";
+export const EXERCISE_CATALOG_URL = "/media/exercises/index.json";
 
 interface CatalogRecord {
   id: string;
@@ -11,6 +11,7 @@ interface CatalogRecord {
   category: string;
   secondaryMuscles?: string[];
   instructions?: string[];
+  file?: string;
   gifUrl?: string;
 }
 
@@ -71,7 +72,7 @@ function toExercise(record: CatalogRecord): Exercise {
     equipment: EQUIPMENT[record.equipment] ?? record.equipment,
     source: "exercise-gifs-db",
     reviewStatus: "catalog",
-    gifUrl: record.gifUrl,
+    gifUrl: record.file ? `/media/exercises/${record.file}` : undefined,
     muscles,
     phases: (record.instructions ?? []).slice(0, 5).map((description, index) => ({ name: `步骤 ${index + 1}`, description })),
     cues: ["该条目来自外部目录，肌肉映射为粗粒度分类。", "先用轻负荷确认动作范围与控制。", "GIF 只能帮助观察外形，不能替代个体化评估。"],

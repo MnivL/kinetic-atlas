@@ -12,7 +12,7 @@ export interface Exercise {
   selfChecks: string[];
 }
 const m = (id: string, nameZh: string, nameEn: string, role: MuscleRole, activation: number, ...meshHints: string[]): ExerciseMuscle => ({ id, nameZh, nameEn, role, activation, meshHints });
-const GIF = "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/";
+const GIF = "/media/exercises/";
 
 const common = {
   squatChecks: ["先做徒手版本，比较是否仍出现相同偏移", "降低重量与动作范围，观察偏移是否随难度变化", "分别测试左右侧活动度与控制"],

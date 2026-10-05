@@ -7,8 +7,8 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { Box, Layers, LoaderCircle, Rotate3D, ScanLine } from "lucide-react";
 import type { Exercise, MuscleRole } from "@/lib/exercise-data";
 
-const MUSCLE_FBX = "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/MuscularSystem100.fbx";
-const REGIONS_FBX = "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/Regions%20of%20human%20body100.fbx";
+const MUSCLE_FBX = "/media/anatomy/MuscularSystem100.fbx";
+const REGIONS_FBX = "/media/anatomy/RegionsOfHumanBody100.fbx";
 const ROLE_HEX: Record<MuscleRole, number> = { primary: 0xff5b45, secondary: 0xf6b84b, stabilizer: 0x4ea7d8 };
 
 interface Props { exercise: Exercise }
