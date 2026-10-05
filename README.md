@@ -21,7 +21,7 @@ npm run dev
 
 ### 安装本地媒体
 
-首次安装可运行 `powershell -ExecutionPolicy Bypass -File scripts/download-local-media.ps1`。它会下载约 0.40 GiB 的两个 FBX、动作索引和 1323 个 GIF 到 `public/media/`；该目录不会提交到 Git。中断后重复运行即可只补齐缺失文件。
+首次安装可运行 `powershell -ExecutionPolicy Bypass -File scripts/download-local-media.ps1`。它会下载约 0.40 GiB 的两个 FBX、动作索引和 1323 个 GIF 到 `public/media/`；较大的肌肉 FBX 会自动拆分为小于 25MiB 的本地片段，以满足生产服务的单文件体积限制。该目录不会提交到 Git。中断后重复运行即可只补齐缺失文件。
 
 ## 内容边界
 

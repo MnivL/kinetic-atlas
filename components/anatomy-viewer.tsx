@@ -7,7 +7,10 @@ import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { Box, Layers, LoaderCircle, Rotate3D, ScanLine } from "lucide-react";
 import type { Exercise, MuscleRole } from "@/lib/exercise-data";
 
-const MUSCLE_FBX = "/media/anatomy/MuscularSystem100.fbx";
+const MUSCLE_FBX_PARTS = [
+  "/media/anatomy/MuscularSystem100.fbx.part-001",
+  "/media/anatomy/MuscularSystem100.fbx.part-002",
+];
 const REGIONS_FBX = "/media/anatomy/RegionsOfHumanBody100.fbx";
 const ROLE_HEX: Record<MuscleRole, number> = { primary: 0xff5b45, secondary: 0xf6b84b, stabilizer: 0x4ea7d8 };
 
@@ -16,6 +19,23 @@ type FocusMode = "muscles" | "fascia";
 
 function material(color = 0x75817d, opacity = 1) {
   return new THREE.MeshStandardMaterial({ color, roughness: .68, metalness: .03, transparent: opacity < 1, opacity });
+}
+
+async function loadLocalFbx(loader: FBXLoader, urls: string[], onProgress?: (progress: number) => void) {
+  const buffers: ArrayBuffer[] = [];
+  for (let index = 0; index < urls.length; index += 1) {
+    const response = await fetch(urls[index]);
+    if (!response.ok) throw new Error(`Unable to load anatomy model: ${response.status}`);
+    buffers.push(await response.arrayBuffer());
+    onProgress?.(Math.round((index + 1) / urls.length * 85));
+  }
+  const byteLength = buffers.reduce((total, buffer) => total + buffer.byteLength, 0);
+  const merged = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const buffer of buffers) { merged.set(new Uint8Array(buffer), offset); offset += buffer.byteLength; }
+  const model = loader.parse(merged.buffer, "");
+  onProgress?.(100);
+  return model;
 }
 
 function capsule(radius: number, length: number, color?: number) {
@@ -160,7 +180,7 @@ export function AnatomyViewer({ exercise }: Props) {
     setLoading(true); setError(""); setProgress(0);
     try {
       const loader = new FBXLoader();
-      const model = await loader.loadAsync(MUSCLE_FBX, (event) => setProgress(event.total ? Math.round(event.loaded / event.total * 100) : 0));
+      const model = await loadLocalFbx(loader, MUSCLE_FBX_PARTS, setProgress);
       const box = new THREE.Box3().setFromObject(model); const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
       const scale = 4 / Math.max(size.x, size.y, size.z); model.scale.setScalar(scale);
       model.position.copy(center).multiplyScalar(-scale); model.position.y += .5;
@@ -174,7 +194,7 @@ export function AnatomyViewer({ exercise }: Props) {
   async function loadSurface(scene: THREE.Scene, anchor: THREE.Object3D, scale?: number, center?: THREE.Vector3) {
     const loader = new FBXLoader();
     try {
-      const surface = await loader.loadAsync(REGIONS_FBX);
+      const surface = await loadLocalFbx(loader, [REGIONS_FBX]);
       const surfaceBox = new THREE.Box3().setFromObject(surface); const surfaceSize = surfaceBox.getSize(new THREE.Vector3()); const surfaceCenter = center ?? surfaceBox.getCenter(new THREE.Vector3());
       const surfaceScale = scale ?? 4 / Math.max(surfaceSize.x, surfaceSize.y, surfaceSize.z);
       surface.scale.setScalar(surfaceScale); surface.position.copy(surfaceCenter).multiplyScalar(-surfaceScale); surface.position.y += .5; surface.name = "surface-layer";

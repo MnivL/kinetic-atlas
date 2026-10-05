@@ -10,9 +10,39 @@ $anatomyRoot = Join-Path $assetRoot "anatomy"
 $exerciseRoot = Join-Path $assetRoot "exercises"
 New-Item -ItemType Directory -Force -Path $anatomyRoot, $exerciseRoot | Out-Null
 
+function Save-Asset([string]$uri, [string]$destination) {
+  Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $destination
+}
+
+function Save-SplitAsset([string]$uri, [string]$destination) {
+  $temporary = "$destination.download"
+  Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $temporary
+  $input = [System.IO.File]::OpenRead($temporary)
+  $partNumber = 1
+  $chunkSize = 20MB
+  $buffer = New-Object byte[] $chunkSize
+  try {
+    while (($read = $input.Read($buffer, 0, $buffer.Length)) -gt 0) {
+      $partPath = "$destination.part-$($partNumber.ToString('000'))"
+      $output = [System.IO.File]::Create($partPath)
+      try {
+        $output.Write($buffer, 0, $read)
+      }
+      finally {
+        $output.Dispose()
+      }
+      $partNumber += 1
+    }
+  }
+  finally {
+    $input.Dispose()
+    Remove-Item -LiteralPath $temporary -Force
+  }
+}
+
 if (-not $RetryOnly) {
-  Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/MuscularSystem100.fbx" -OutFile (Join-Path $anatomyRoot "MuscularSystem100.fbx")
-  Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/Regions%20of%20human%20body100.fbx" -OutFile (Join-Path $anatomyRoot "RegionsOfHumanBody100.fbx")
+  Save-SplitAsset "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/MuscularSystem100.fbx" (Join-Path $anatomyRoot "MuscularSystem100.fbx")
+  Save-Asset "https://raw.githubusercontent.com/LluisV/Z-Anatomy/PC-Version/Resources/Models/FBX/Regions%20of%20human%20body100.fbx" (Join-Path $anatomyRoot "RegionsOfHumanBody100.fbx")
   Invoke-WebRequest -UseBasicParsing -Uri "https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/api/en/exercises.json" -OutFile (Join-Path $exerciseRoot "index.json")
 }
 
