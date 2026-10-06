@@ -18,4 +18,11 @@ const coverage = sourceMuscles.map((muscle) => {
   return { muscle, hints, hits: hints.filter((hint) => normalizedNames.some((name) => name.includes(normalize(hint)))) };
 });
 const omittedSecondary = catalog.exercises.reduce((total, record) => total + Math.max(0, (record.secondaryMuscles?.length ?? 0) - 4), 0);
-console.log(JSON.stringify({ meshCount: names.length, sourceMuscles, omittedSecondaryBeforeFix: omittedSecondary, coverage, names }, null, 2));
+console.log(JSON.stringify({
+  meshCount: names.length,
+  sourceMuscles,
+  omittedSecondaryBeforeFix: omittedSecondary,
+  unmatchedHints: coverage.flatMap((item) => item.hints.filter((hint) => !item.hits.includes(hint)).map((hint) => `${item.muscle}:${hint}`)),
+  coverage,
+  ...(process.env.AUDIT_VERBOSE === "1" ? { names } : {}),
+}, null, 2));
