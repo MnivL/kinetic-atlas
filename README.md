@@ -7,6 +7,21 @@ Kinetic Atlas 是一个本地优先的健身动作与 3D 解剖学习工具。�
 
 > 本项目用于运动学习与教育，不提供医学诊断。肌肉参与百分比是教学用相对权重，不是 EMG 实测值。
 
+## 界面预览
+
+![杠铃深蹲的 3D 肌肉发力视图](docs/images/overview.jpg)
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/action-demo.jpg" alt="动作 GIF 与动作要点" /></td>
+    <td width="50%"><img src="docs/images/posture-check.jpg" alt="体态观察与引导式检查" /></td>
+  </tr>
+  <tr>
+    <td align="center">本地 GIF、动作要点与常见代偿</td>
+    <td align="center">体态观察提示与引导式检查</td>
+  </tr>
+</table>
+
 ## 功能
 
 - 1334 个动作条目：11 个精编动作与 1323 个本地动作索引。
@@ -78,6 +93,7 @@ npm start
 | `npm start` | 启动本地生产服务 |
 | `npm run catalog:build` | 从本地原始索引重新生成中文动作数据库 |
 | `npm run anatomy:audit` | 扫描 FBX 网格并审计全部动作肌群映射 |
+| `npm run screenshots` | 在开发服务运行时重新生成 README 截图 |
 
 ## 数据与肌群映射
 
