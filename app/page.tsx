@@ -34,7 +34,7 @@ export default function Home() {
     const q = query.trim().toLowerCase();
     return q ? allExercises.filter((x) => [x.nameZh, x.nameEn, x.pattern, x.equipment, ...x.muscles.map((m) => `${m.nameZh} ${m.nameEn}`)].join(" ").toLowerCase().includes(q)) : allExercises;
   }, [allExercises, query]);
-  const visibleExercises = filtered.slice(0, 120);
+  const visibleExercises = filtered;
   const selected = allExercises.find((item) => item.id === selectedId) ?? exercises[0];
   const demonstrationUrl = importedMediaUrl ?? selected.gifUrl;
 
@@ -146,7 +146,7 @@ export default function Home() {
             </button>
             <p className="mt-2 text-[10px] leading-4 text-white/25">启动时自动载入本地 1323 条目录；GIF 与肌群映射均来自本机数据。</p>
           </div>
-          <div className="flex items-center justify-between px-4 pb-3 text-xs text-white/35"><span>动作库</span><span>{visibleExercises.length}{filtered.length > visibleExercises.length ? ` / ${filtered.length}` : ""} 项</span></div>
+          <div className="flex items-center justify-between px-4 pb-3 text-xs text-white/35"><span>动作库</span><span>{visibleExercises.length} 项</span></div>
           <nav className="rail-scroll min-h-0 flex-1 px-2 pb-5" aria-label="动作列表">
             {visibleExercises.map((exercise) => {
               const active = exercise.id === selected.id;
