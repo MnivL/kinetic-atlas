@@ -141,6 +141,7 @@ export function AnatomyViewer({ exercise, playbackPriority = false }: Props) {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+  const autoLoadStartedRef = useRef(false);
 
   useEffect(() => {
     playbackPriorityRef.current = playbackPriority;
@@ -186,6 +187,15 @@ export function AnatomyViewer({ exercise, playbackPriority = false }: Props) {
   useEffect(() => {
     if (modelRef.current) setFasciaAvailable(applyStudyColors(modelRef.current, exercise, detailed, focusMode));
   }, [exercise, detailed, focusMode]);
+
+  useEffect(() => {
+    if (autoLoadStartedRef.current) return;
+    autoLoadStartedRef.current = true;
+    void loadDetailedModel();
+    // The detailed Z-Anatomy model is the default view; the lightweight model
+    // remains only as an immediate fallback while local FBX assets load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadDetailedModel() {
     const scene = sceneRef.current;
