@@ -16,7 +16,6 @@ function MuscleRow({ muscle }: { muscle: Exercise["muscles"][number] }) {
       <span className={`h-2 w-2 rounded-full ${ROLE_COLOR[muscle.role]}`} />
       <div>
         <p className="text-sm font-medium text-white">{muscle.nameZh}</p>
-        {muscle.nameEn && <p className="mt-0.5 text-xs text-white/42">{muscle.nameEn}</p>}
       </div>
       <span className="font-mono text-xs text-white/45">{Math.round(muscle.activation * 100)}%</span>
     </li>
@@ -154,7 +153,6 @@ export default function Home() {
           <div className="absolute left-5 top-5 z-10 max-w-[70%]">
             <p className="mb-1 text-xs font-medium uppercase tracking-[0.15em] text-[#b8f55b]">{selected.pattern}</p>
             <h1 className="text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">{selected.nameZh}</h1>
-            {selected.nameEn && <p className="mt-1 text-sm text-white/38">{selected.nameEn}</p>}
             {selected.reviewStatus === "catalog" && <p className="mt-2 inline-flex rounded-full border border-[#f6b84b]/20 bg-[#f6b84b]/8 px-2 py-1 text-[10px] text-[#f7cc75]">公共目录映射 · 未经人工逐条审核</p>}
           </div>
           <AnatomyViewer exercise={selected} playbackPriority={tab === "form" && Boolean(demonstrationUrl)} />
