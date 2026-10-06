@@ -17,26 +17,26 @@ export interface CatalogRecord {
 
 interface LocalCatalogResponse { count: number; language: string; exercises: Exercise[] }
 
-const MUSCLES: Record<string, Omit<ExerciseMuscle, "role" | "activation">> = {
-  cardio: { id: "cardio-system", nameZh: "全身肌群", nameEn: "Whole body", meshHints: ["heart", "diaphragm", "erector spinae", "quadriceps", "gluteus"] },
+export const MUSCLES: Record<string, Omit<ExerciseMuscle, "role" | "activation">> = {
+  cardio: { id: "cardio-system", nameZh: "全身肌群", nameEn: "Whole body", meshHints: ["diaphragm", "rectus femoris", "gluteus", "biceps femoris", "gastrocnemius", "pectoralis"] },
   abductors: { id: "gluteus-medius", nameZh: "髋外展肌群", nameEn: "Hip abductors", meshHints: ["gluteus medius", "gluteus minimus", "tensor fasciae latae"] },
-  abs: { id: "abdominals", nameZh: "腹肌群", nameEn: "Abdominals", meshHints: ["rectus abdominis", "oblique"] },
-  adductors: { id: "adductors", nameZh: "髋内收肌群", nameEn: "Hip adductors", meshHints: ["adductor", "gracilis"] },
+  abs: { id: "abdominals", nameZh: "腹肌群", nameEn: "Abdominals", meshHints: ["rectus abdominis", "external abdominal oblique", "internal abdominal oblique", "transversus abdominis", "pyramidalis", "quadratus lumborum"] },
+  adductors: { id: "adductors", nameZh: "髋内收肌群", nameEn: "Hip adductors", meshHints: ["adductor", "gracilis", "pectineus"] },
   biceps: { id: "biceps", nameZh: "肱二头肌", nameEn: "Biceps brachii", meshHints: ["biceps brachii"] },
-  calves: { id: "calves", nameZh: "小腿三头肌", nameEn: "Calves", meshHints: ["gastrocnemius", "soleus"] },
-  delts: { id: "deltoid", nameZh: "三角肌", nameEn: "Deltoid", meshHints: ["deltoid"] },
-  forearms: { id: "forearm-flexors", nameZh: "前臂肌群", nameEn: "Forearms", meshHints: ["flexor carpi", "extensor carpi", "flexor digitorum"] },
-  glutes: { id: "gluteus-maximus", nameZh: "臀肌群", nameEn: "Gluteals", meshHints: ["gluteus maximus", "gluteus medius"] },
+  calves: { id: "calves", nameZh: "小腿三头肌", nameEn: "Calves", meshHints: ["gastrocnemius", "soleus", "plantaris"] },
+  delts: { id: "deltoid", nameZh: "三角肌", nameEn: "Deltoid", meshHints: ["deltoid", "clavicular part of deltoid", "acromial part of deltoid", "scapular spinal part of deltoid"] },
+  forearms: { id: "forearm-flexors", nameZh: "前臂肌群", nameEn: "Forearms", meshHints: ["flexor carpi", "extensor carpi", "flexor digitorum", "flexor pollicis", "extensor pollicis", "brachioradialis", "pronator"] },
+  glutes: { id: "gluteus-maximus", nameZh: "臀肌群", nameEn: "Gluteals", meshHints: ["gluteus maximus", "gluteus medius", "gluteus minimus", "tensor fasciae latae"] },
   hamstrings: { id: "hamstrings", nameZh: "腘绳肌", nameEn: "Hamstrings", meshHints: ["biceps femoris", "semitendinosus", "semimembranosus"] },
   lats: { id: "latissimus", nameZh: "背阔肌", nameEn: "Latissimus dorsi", meshHints: ["latissimus dorsi"] },
   "levator-scapulae": { id: "trapezius", nameZh: "肩胛提肌", nameEn: "Levator scapulae", meshHints: ["levator scapulae"] },
-  pectorals: { id: "pectoralis-major", nameZh: "胸肌群", nameEn: "Pectorals", meshHints: ["pectoralis major", "pectoralis minor"] },
+  pectorals: { id: "pectoralis-major", nameZh: "胸肌群", nameEn: "Pectorals", meshHints: ["pectoralis major", "pectoralis minor", "clavicular head of pectoralis major", "sternocostal head of pectoralis major", "abdominal part of pectoralis major", "subclavius"] },
   quads: { id: "quadriceps", nameZh: "股四头肌", nameEn: "Quadriceps", meshHints: ["rectus femoris", "vastus"] },
   "serratus-anterior": { id: "serratus", nameZh: "前锯肌", nameEn: "Serratus anterior", meshHints: ["serratus anterior"] },
-  spine: { id: "erector-spinae", nameZh: "脊柱伸肌群", nameEn: "Spinal extensors", meshHints: ["erector spinae", "multifidus"] },
-  traps: { id: "trapezius", nameZh: "斜方肌", nameEn: "Trapezius", meshHints: ["trapezius"] },
+  spine: { id: "erector-spinae", nameZh: "脊柱伸肌群", nameEn: "Spinal extensors", meshHints: ["iliocostalis", "longissimus", "spinalis", "semispinalis", "multifidus", "interspinales", "intertransversarii", "quadratus lumborum"] },
+  traps: { id: "trapezius", nameZh: "斜方肌", nameEn: "Trapezius", meshHints: ["trapezius", "descending part of trapezius", "transverse part of trapezius", "ascending part of trapezius"] },
   triceps: { id: "triceps", nameZh: "肱三头肌", nameEn: "Triceps brachii", meshHints: ["triceps brachii"] },
-  "upper-back": { id: "rhomboids", nameZh: "上背肌群", nameEn: "Upper back", meshHints: ["rhomboid", "trapezius"] },
+  "upper-back": { id: "rhomboids", nameZh: "上背肌群", nameEn: "Upper back", meshHints: ["rhomboid", "trapezius", "levator scapulae", "teres major"] },
 };
 
 const EQUIPMENT: Record<string, string> = {
@@ -164,7 +164,7 @@ export function toExercise(record: CatalogRecord): Exercise {
   const primary = muscle(record.muscle, "primary", .82) ?? muscle("cardio", "primary", .72)!;
   const muscles = [
     primary,
-    ...(record.secondaryMuscles ?? []).slice(0, 4).map((name, index) => muscle(name, index < 2 ? "secondary" : "stabilizer", .58 - index * .07)),
+    ...(record.secondaryMuscles ?? []).map((name, index) => muscle(name, index < 2 ? "secondary" : "stabilizer", Math.max(.28, .58 - index * .07))),
   ].filter((item): item is ExerciseMuscle => Boolean(item));
 
   return {

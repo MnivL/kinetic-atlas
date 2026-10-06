@@ -96,7 +96,9 @@ function buildStudyModel() {
 
 function applyStudyColors(root: THREE.Object3D, exercise: Exercise, detailed = false, focusMode: FocusMode = "muscles") {
   const byId = new Map(exercise.muscles.map((muscle) => [muscle.id, muscle]));
-  const normalizeName = (value: string) => value.toLowerCase().replace(/[_\-.]+/g, " ").replace(/\s+/g, " ");
+  // Z-Anatomy FBX names use underscores and append side markers (l/r).
+  // Normalize all separators so exercise metadata can match real mesh names.
+  const normalizeName = (value: string) => value.toLowerCase().replace(/[\s_\-.]+/g, " ").replace(/\s+/g, " ").trim();
   const allHints = exercise.muscles.flatMap((muscle) => muscle.meshHints.map((hint) => ({ hint: normalizeName(hint), muscle })));
   let fasciaMeshes = 0;
   if (detailed && focusMode === "fascia") {
