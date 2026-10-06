@@ -121,6 +121,40 @@ function translateInstruction(instruction: string, record: CatalogRecord) {
   return "保持动作稳定、呼吸顺畅，并在无痛范围内完成。";
 }
 
+function buildActionCues(record: CatalogRecord, primary: ExerciseMuscle) {
+  const name = record.name.toLowerCase();
+  const equipment = EQUIPMENT[record.equipment] ?? "器械";
+  const target = primary.nameZh;
+  const cues = [`以本地动作动图中的运动轨迹为参考，先建立${target}张力，再开始主要动作。`];
+
+  if (/plank|side bridge/.test(name)) {
+    cues.push("保持头部、躯干和骨盆成一条稳定线，主动收紧核心和臀部，避免髋部塌陷或旋转。");
+  } else if (/squat|lunge|step|split|leg press|pistol|cossack|hack/.test(name)) {
+    cues.push("脚掌保持稳定，膝盖大致朝向脚尖，下降深度以骨盆和躯干仍可控为准。");
+  } else if (/deadlift|good morning|hip extension|hip thrust|bridge|pull through|swing/.test(name)) {
+    cues.push("先做髋铰链，保持杠铃或负重贴近身体；伸髋完成动作，不用腰椎过度后仰代偿。");
+  } else if (/row|pulldown|pull up|chin up|pull-up|chin/.test(name)) {
+    cues.push("先下沉并稳定肩胛，再让肘部沿目标方向移动；避免耸肩或用躯干摆动借力。");
+  } else if (/press|push|dip|fly|flyes|pushdown|extension/.test(name)) {
+    cues.push("保持手腕与前臂对齐，肩胛和肋骨位置稳定；推起时不要用耸肩或锁死关节换取幅度。");
+  } else if (/curl|concentration|preacher/.test(name)) {
+    cues.push("固定上臂和肘部位置，只在舒适范围内屈伸前臂；回程放慢，避免甩动负重。");
+  } else if (/raise|abduction|adduction|shrug|lateral/.test(name)) {
+    cues.push("用目标部位带动负重，保持身体不摆动；抬到可控范围即可，避免耸肩抢动作。");
+  } else if (/crunch|sit up|leg raise|plank|roll|roller|pallof|twist|rotation/.test(name)) {
+    cues.push("保持骨盆和胸廓协调，颈部放松；核心主动维持躯干，不用惯性完成最后一段。");
+  } else if (/stretch|yoga|mobility/.test(name)) {
+    cues.push("缓慢进入拉伸位置并持续呼吸，只到牵拉感而不是疼痛；不要弹震或强行压入幅度。");
+  } else if (/jump|hop|run|sprint|bike|cardio|burpee|climb/.test(name)) {
+    cues.push("保持稳定节奏，落地时用髋、膝、踝共同吸收冲击；疲劳后仍应优先保证落地和呼吸控制。");
+  } else {
+    cues.push(`使用${equipment}时保持躯干稳定、动作连续，先用轻负荷确认完整活动范围。`);
+  }
+
+  cues.push("出现锐痛、麻木或明显代偿时停止，降低负荷或缩小幅度后再评估。");
+  return cues;
+}
+
 function muscle(slug: string, role: MuscleRole, activation: number): ExerciseMuscle | null {
   const base = MUSCLES[slug];
   return base ? { ...base, role, activation } : null;
@@ -144,7 +178,7 @@ export function toExercise(record: CatalogRecord): Exercise {
     gifUrl: record.file ? `/media/exercises/${record.file}` : undefined,
     muscles: muscles.map((item) => ({ ...item, nameEn: "" })),
     phases: (record.instructions ?? []).map((instruction, index) => ({ name: ["准备", "启动", "执行", "还原", "呼吸"][index] ?? `步骤${index + 1}`, description: translateInstruction(instruction, record) })),
-    cues: ["该条目来自外部目录，肌肉映射为粗粒度分类。", "先用轻负荷确认动作范围与控制。", "GIF 只能帮助观察外形，不能替代个体化评估。"],
+    cues: buildActionCues(record, primary),
     compensations: [{ observation: "动作轨迹与示范明显不同", possibleContributors: ["器械与身体比例差异", "活动度或控制策略差异", "负荷超过当前能力"] }],
     selfChecks: ["降低负荷或改为徒手版本后复查", "从正面与侧面录像比较左右和轨迹", "出现疼痛、麻木或明显无力时停止训练"],
   };
