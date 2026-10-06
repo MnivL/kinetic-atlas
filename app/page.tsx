@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, ChevronRight, Database, Dumbbell, Info, LoaderCircle, Search, ShieldCheck, Upload } from "lucide-react";
+import { Activity, ChevronRight, Dumbbell, Info, Search, ShieldCheck } from "lucide-react";
 import { AnatomyViewer } from "@/components/anatomy-viewer";
 import { exercises, type Exercise } from "@/lib/exercise-data";
 import { loadExerciseCatalog } from "@/lib/external-catalog";
@@ -26,9 +26,8 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(exercises[0].id);
   const [tab, setTab] = useState<DetailTab>("mechanics");
-  const [importedMediaUrl, setImportedMediaUrl] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<Exercise[]>([]);
-  const [catalogState, setCatalogState] = useState<"idle" | "loading" | "ready" | "error">("loading");
+  const [catalogError, setCatalogError] = useState(false);
   const allExercises = useMemo(() => [...exercises, ...catalog], [catalog]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -36,18 +35,10 @@ export default function Home() {
   }, [allExercises, query]);
   const visibleExercises = filtered;
   const selected = allExercises.find((item) => item.id === selectedId) ?? exercises[0];
-  const demonstrationUrl = importedMediaUrl ?? selected.gifUrl;
-
-  useEffect(() => () => {
-    if (importedMediaUrl) URL.revokeObjectURL(importedMediaUrl);
-  }, [importedMediaUrl]);
+  const demonstrationUrl = selected.gifUrl;
 
   function selectExercise(id: string) {
     setSelectedId(id);
-    setImportedMediaUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return null;
-    });
   }
 
   useEffect(() => {
@@ -88,38 +79,16 @@ export default function Home() {
     return () => lifecycle.abort();
   }, [allExercises]);
 
-  async function importCatalog() {
-    if (catalogState === "loading" || catalogState === "ready") return;
-    setCatalogState("loading");
-    try {
-      const items = await loadExerciseCatalog();
-      setCatalog(items);
-      setCatalogState("ready");
-    } catch {
-      setCatalogState("error");
-    }
-  }
-
   useEffect(() => {
     let cancelled = false;
     loadExerciseCatalog().then((items) => {
       if (cancelled) return;
       setCatalog(items);
-      setCatalogState("ready");
     }).catch(() => {
-      if (!cancelled) setCatalogState("error");
+      if (!cancelled) setCatalogError(true);
     });
     return () => { cancelled = true; };
   }, []);
-
-  function importMedia(file?: File) {
-    if (!file) return;
-    setImportedMediaUrl((current) => {
-      if (current) URL.revokeObjectURL(current);
-      return URL.createObjectURL(file);
-    });
-    setTab("form");
-  }
 
   return (
     <main className="min-h-screen bg-[#07100f] text-[#edf5f1]">
@@ -140,11 +109,8 @@ export default function Home() {
             </label>
           </div>
           <div className="px-4 pb-3">
-            <button onClick={importCatalog} disabled={catalogState === "loading" || catalogState === "ready"} className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/8 bg-white/[0.025] px-3 py-2.5 text-xs text-white/55 transition hover:border-[#b8f55b]/35 hover:text-white disabled:opacity-65">
-              {catalogState === "loading" ? <LoaderCircle className="animate-spin" size={14} /> : <Database size={14} />}
-              {catalogState === "ready" ? `公共索引已载入 · ${catalog.length} 条` : catalogState === "loading" ? "正在载入动作索引…" : catalogState === "error" ? "载入失败 · 点击重试" : "载入 1323 动作公共索引"}
-            </button>
-            <p className="mt-2 text-[10px] leading-4 text-white/25">启动时自动载入本地 1323 条目录；GIF 与肌群映射均来自本机数据。</p>
+            <p className="text-[10px] leading-4 text-white/30">本地动作库 · GIF 与肌群映射均来自本机数据</p>
+            {catalogError && <p className="mt-2 text-[10px] leading-4 text-red-200/70">本地动作库加载失败，请刷新页面重试。</p>}
           </div>
           <div className="flex items-center justify-between px-4 pb-3 text-xs text-white/35"><span>动作库</span><span>{visibleExercises.length} 项</span></div>
           <nav className="rail-scroll min-h-0 flex-1 px-2 pb-5" aria-label="动作列表">
@@ -165,27 +131,22 @@ export default function Home() {
           <div className="absolute left-5 top-5 z-10 max-w-[70%]">
             <p className="mb-1 text-xs font-medium uppercase tracking-[0.15em] text-[#b8f55b]">{selected.pattern}</p>
             <h1 className="text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">{selected.nameZh}</h1>
-            {selected.reviewStatus === "catalog" && <p className="mt-2 inline-flex rounded-full border border-[#f6b84b]/20 bg-[#f6b84b]/8 px-2 py-1 text-[10px] text-[#f7cc75]">公共目录映射 · 未经人工逐条审核</p>}
           </div>
           <AnatomyViewer exercise={selected} playbackPriority={tab === "form" && Boolean(demonstrationUrl)} />
           <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-end justify-between gap-3">
             <div className="rounded-xl border border-white/8 bg-[#08110f]/78 px-3 py-2.5 text-xs text-white/50 backdrop-blur-md">
               <div className="flex flex-wrap gap-x-4 gap-y-2">{(Object.keys(ROLE_LABEL) as Array<keyof typeof ROLE_LABEL>).map((role) => <span key={role} className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${ROLE_COLOR[role]}`} />{ROLE_LABEL[role]}</span>)}</div>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-[#101c19]/90 px-3 py-2.5 text-xs font-medium text-white/70 backdrop-blur-md transition hover:border-[#b8f55b]/45 hover:text-white">
-              <Upload size={14} />导入/替换动作 GIF
-              <input type="file" accept="image/gif" className="sr-only" onChange={(e) => importMedia(e.target.files?.[0])} />
-            </label>
           </div>
         </section>
 
         <aside className="detail-panel border-l border-white/8 bg-[#091412]">
-          <div className="border-b border-white/8 p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs text-white/35">动作档案</p><p className="mt-1 text-sm font-medium">{selected.equipment}</p></div><span className={`rounded-full border px-2.5 py-1 text-[11px] ${selected.reviewStatus === "catalog" ? "border-[#f6b84b]/22 bg-[#f6b84b]/8 text-[#f7cc75]" : "border-[#b8f55b]/22 bg-[#b8f55b]/8 text-[#c9fb7e]"}`}>{selected.reviewStatus === "catalog" ? "目录映射" : "已人工整理"}</span></div></div>
+          <div className="border-b border-white/8 p-5"><div className="flex items-center justify-between gap-3"><div><p className="text-xs text-white/35">动作档案</p><p className="mt-1 text-sm font-medium">{selected.equipment}</p></div><span className="rounded-full border border-[#b8f55b]/22 bg-[#b8f55b]/8 px-2.5 py-1 text-[11px] text-[#c9fb7e]">本地动作</span></div></div>
           <div className="grid grid-cols-3 border-b border-white/8 px-3 pt-2">
             {([["mechanics", "发力"], ["form", "动作"], ["posture", "体态"]] as Array<[DetailTab, string]>).map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={`border-b-2 px-2 py-3 text-sm transition ${tab === id ? "border-[#b8f55b] text-white" : "border-transparent text-white/35 hover:text-white/65"}`}>{label}</button>)}
           </div>
           <div className="detail-scroll p-5">
-            {tab === "mechanics" && <><h2 className="section-label">肌肉参与</h2>{selected.reviewStatus === "catalog" && <p className="mt-2 text-[11px] leading-4 text-white/35">主肌群取自动作 GIF 的本地目录分类；辅助肌群取自同一条本地索引记录，三维模型按解剖名称匹配。</p>}<ul className="mt-2">{[...selected.muscles].sort((a, b) => b.activation - a.activation).map((m) => <MuscleRow key={m.id} muscle={m} />)}</ul><h2 className="section-label mt-7">动作阶段</h2><ol className="mt-3 space-y-3">{selected.phases.map((phase, i) => <li key={phase.name} className="grid grid-cols-[26px_1fr] gap-3"><span className="grid h-6 w-6 place-items-center rounded-full border border-white/10 text-[11px] text-white/45">{i + 1}</span><div><p className="text-sm font-medium">{phase.name}</p><p className="mt-1 text-[13px] leading-5 text-white/46">{phase.description}</p></div></li>)}</ol></>}
+            {tab === "mechanics" && <><h2 className="section-label">肌肉参与</h2><p className="mt-2 text-[11px] leading-4 text-white/35">主肌群和辅助肌群来自本地动作数据，三维模型按解剖名称逐项匹配。</p><ul className="mt-2">{[...selected.muscles].sort((a, b) => b.activation - a.activation).map((m) => <MuscleRow key={m.id} muscle={m} />)}</ul><h2 className="section-label mt-7">动作阶段</h2><ol className="mt-3 space-y-3">{selected.phases.map((phase, i) => <li key={phase.name} className="grid grid-cols-[26px_1fr] gap-3"><span className="grid h-6 w-6 place-items-center rounded-full border border-white/10 text-[11px] text-white/45">{i + 1}</span><div><p className="text-sm font-medium">{phase.name}</p><p className="mt-1 text-[13px] leading-5 text-white/46">{phase.description}</p></div></li>)}</ol></>}
             {tab === "form" && <>
               {demonstrationUrl && <section className="mb-7">
                 <div className="flex items-center justify-between gap-3"><h2 className="section-label">动作演示</h2><span className="text-[10px] text-white/30">本地 GIF</span></div>
