@@ -16,6 +16,7 @@ npm run dev
 - 精细模型加载后可切换筋膜视图，单独观察模型中 fascia、aponeurosis、retinaculum 命名结构。
 - 动作 GIF 通过浏览器本地文件选择器导入，不会上传或写入仓库。
 - 可按需载入 ExerciseGymGifsDB v1.1.0 的 1323 条动作元数据，并粗粒度映射到 3D 肌群；界面最多同时渲染 120 条结果。
+- `npm run catalog:build` 会把本地原始索引转换为 `data/exercises.zh.json`，写入 1323 条中文动作名称、中文动作步骤、器械和肌群映射；应用运行时只读取这个中文本地数据库，不调用外部索引。
 - 第三方 GIF 只在用户点击后按需从本机文件加载；媒体目录被 Git 忽略，来源仓库不授予 GIF 再分发权。
 - 许可边界见 `ANATOMY_ATTRIBUTION.md` 与 `MEDIA_NOTICE.md`。
 
