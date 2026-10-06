@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, ChevronRight, Database, Dumbbell, ExternalLink, Info, LoaderCircle, Search, ShieldCheck, Upload, X } from "lucide-react";
+import { Activity, ChevronRight, Database, Dumbbell, Info, LoaderCircle, Search, ShieldCheck, Upload } from "lucide-react";
 import { AnatomyViewer } from "@/components/anatomy-viewer";
 import { exercises, type Exercise } from "@/lib/exercise-data";
 import { loadExerciseCatalog } from "@/lib/external-catalog";
@@ -27,7 +27,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(exercises[0].id);
   const [tab, setTab] = useState<DetailTab>("mechanics");
-  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [importedMediaUrl, setImportedMediaUrl] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<Exercise[]>([]);
   const [catalogState, setCatalogState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const allExercises = useMemo(() => [...exercises, ...catalog], [catalog]);
@@ -37,6 +37,19 @@ export default function Home() {
   }, [allExercises, query]);
   const visibleExercises = filtered.slice(0, 120);
   const selected = allExercises.find((item) => item.id === selectedId) ?? exercises[0];
+  const demonstrationUrl = importedMediaUrl ?? selected.gifUrl;
+
+  useEffect(() => () => {
+    if (importedMediaUrl) URL.revokeObjectURL(importedMediaUrl);
+  }, [importedMediaUrl]);
+
+  function selectExercise(id: string) {
+    setSelectedId(id);
+    setImportedMediaUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return null;
+    });
+  }
 
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext }).modelContext;
@@ -69,7 +82,7 @@ export default function Home() {
         const id = typeof input === "object" && input && "id" in input ? String((input as { id: unknown }).id) : "";
         const next = allExercises.find((x) => x.id === id);
         if (!next) throw new Error("Unknown exercise id");
-        setSelectedId(id); setMediaUrl(null);
+        selectExercise(id);
         return { selected: { id: next.id, nameZh: next.nameZh, nameEn: next.nameEn } };
       },
     });
@@ -90,8 +103,11 @@ export default function Home() {
 
   function importMedia(file?: File) {
     if (!file) return;
-    if (mediaUrl) URL.revokeObjectURL(mediaUrl);
-    setMediaUrl(URL.createObjectURL(file));
+    setImportedMediaUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return URL.createObjectURL(file);
+    });
+    setTab("form");
   }
 
   return (
@@ -124,7 +140,7 @@ export default function Home() {
             {visibleExercises.map((exercise) => {
               const active = exercise.id === selected.id;
               return (
-                <button key={exercise.id} onClick={() => { setSelectedId(exercise.id); setMediaUrl(null); }} className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${active ? "bg-[#b8f55b] text-[#08110f]" : "text-white/72 hover:bg-white/5 hover:text-white"}`}>
+                <button key={exercise.id} onClick={() => selectExercise(exercise.id)} className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${active ? "bg-[#b8f55b] text-[#08110f]" : "text-white/72 hover:bg-white/5 hover:text-white"}`}>
                   <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${active ? "bg-black/10" : "bg-white/5"}`}><Dumbbell size={15} /></span>
                   <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{exercise.nameZh}</span><span className={`mt-0.5 block truncate text-[11px] ${active ? "text-black/55" : "text-white/32"}`}>{exercise.pattern} · {exercise.equipment}</span></span>
                   <ChevronRight size={14} className={active ? "opacity-55" : "opacity-25"} />
@@ -141,18 +157,16 @@ export default function Home() {
             <p className="mt-1 text-sm text-white/38">{selected.nameEn}</p>
             {selected.reviewStatus === "catalog" && <p className="mt-2 inline-flex rounded-full border border-[#f6b84b]/20 bg-[#f6b84b]/8 px-2 py-1 text-[10px] text-[#f7cc75]">公共目录映射 · 未经人工逐条审核</p>}
           </div>
-          <AnatomyViewer exercise={selected} />
+          <AnatomyViewer exercise={selected} playbackPriority={tab === "form" && Boolean(demonstrationUrl)} />
           <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap items-end justify-between gap-3">
             <div className="rounded-xl border border-white/8 bg-[#08110f]/78 px-3 py-2.5 text-xs text-white/50 backdrop-blur-md">
               <div className="flex flex-wrap gap-x-4 gap-y-2">{(Object.keys(ROLE_LABEL) as Array<keyof typeof ROLE_LABEL>).map((role) => <span key={role} className="flex items-center gap-2"><span className={`h-2 w-2 rounded-full ${ROLE_COLOR[role]}`} />{ROLE_LABEL[role]}</span>)}</div>
             </div>
             <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-[#101c19]/90 px-3 py-2.5 text-xs font-medium text-white/70 backdrop-blur-md transition hover:border-[#b8f55b]/45 hover:text-white">
-              <Upload size={14} />导入本地动作 GIF
+              <Upload size={14} />导入/替换动作 GIF
               <input type="file" accept="image/gif" className="sr-only" onChange={(e) => importMedia(e.target.files?.[0])} />
             </label>
-            {selected.gifUrl && <button onClick={() => setMediaUrl(selected.gifUrl ?? null)} className="flex items-center gap-2 rounded-xl border border-[#f6b84b]/20 bg-[#101c19]/90 px-3 py-2.5 text-xs font-medium text-[#f7cc75] backdrop-blur-md transition hover:border-[#f6b84b]/45"><ExternalLink size={14} />查看本地 GIF 演示</button>}
           </div>
-          {mediaUrl && <div className="absolute bottom-20 right-4 z-20 overflow-hidden rounded-2xl border border-white/12 bg-black shadow-2xl"><img src={mediaUrl} alt={`${selected.nameZh} 动作演示`} className="h-48 w-48 object-cover" /><button aria-label="关闭动作演示" className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/70 text-white/70" onClick={() => setMediaUrl(null)}><X size={14} /></button>{selected.gifUrl === mediaUrl && <p className="max-w-48 px-3 py-2 text-[9px] leading-4 text-white/38">本地媒体库按需加载 · GIF 权利归原作者</p>}</div>}
         </section>
 
         <aside className="detail-panel border-l border-white/8 bg-[#091412]">
@@ -162,7 +176,14 @@ export default function Home() {
           </div>
           <div className="detail-scroll p-5">
             {tab === "mechanics" && <><h2 className="section-label">肌肉参与</h2><ul className="mt-2">{[...selected.muscles].sort((a, b) => b.activation - a.activation).map((m) => <MuscleRow key={m.id} muscle={m} />)}</ul><h2 className="section-label mt-7">动作阶段</h2><ol className="mt-3 space-y-3">{selected.phases.map((phase, i) => <li key={phase.name} className="grid grid-cols-[26px_1fr] gap-3"><span className="grid h-6 w-6 place-items-center rounded-full border border-white/10 text-[11px] text-white/45">{i + 1}</span><div><p className="text-sm font-medium">{phase.name}</p><p className="mt-1 text-[13px] leading-5 text-white/46">{phase.description}</p></div></li>)}</ol></>}
-            {tab === "form" && <><h2 className="section-label">动作要点</h2><ul className="mt-3 space-y-3">{selected.cues.map((cue) => <li key={cue} className="flex gap-3 text-sm leading-6 text-white/65"><ShieldCheck className="mt-1 shrink-0 text-[#b8f55b]" size={15} />{cue}</li>)}</ul><h2 className="section-label mt-7">常见代偿</h2><div className="mt-3 space-y-3">{selected.compensations.map((item) => <div key={item.observation} className="rounded-xl border border-white/8 bg-white/[0.025] p-3.5"><p className="text-sm font-medium text-[#ffb19f]">{item.observation}</p><p className="mt-1.5 text-[13px] leading-5 text-white/48">{item.possibleContributors.join("；")}</p></div>)}</div></>}
+            {tab === "form" && <>
+              {demonstrationUrl && <section className="mb-7">
+                <div className="flex items-center justify-between gap-3"><h2 className="section-label">动作演示</h2><span className="text-[10px] text-white/30">本地 GIF</span></div>
+                <div className="mt-3 overflow-hidden rounded-xl border border-white/8 bg-black/30"><img src={demonstrationUrl} alt={`${selected.nameZh} 动作演示`} decoding="async" className="aspect-square w-full max-h-64 object-contain" /></div>
+                <p className="mt-2 text-[11px] leading-4 text-white/32">演示直接嵌入动作说明。部分来源 GIF 帧率较低，播放节奏以原始素材为准。</p>
+              </section>}
+              <h2 className="section-label">动作要点</h2><ul className="mt-3 space-y-3">{selected.cues.map((cue) => <li key={cue} className="flex gap-3 text-sm leading-6 text-white/65"><ShieldCheck className="mt-1 shrink-0 text-[#b8f55b]" size={15} />{cue}</li>)}</ul><h2 className="section-label mt-7">常见代偿</h2><div className="mt-3 space-y-3">{selected.compensations.map((item) => <div key={item.observation} className="rounded-xl border border-white/8 bg-white/[0.025] p-3.5"><p className="text-sm font-medium text-[#ffb19f]">{item.observation}</p><p className="mt-1.5 text-[13px] leading-5 text-white/48">{item.possibleContributors.join("；")}</p></div>)}</div>
+            </>}
             {tab === "posture" && <><div className="rounded-xl border border-[#4ea7d8]/18 bg-[#4ea7d8]/7 p-4"><div className="flex items-center gap-2 text-sm font-medium text-[#8dcaeb]"><Info size={15} />观察，不是诊断</div><p className="mt-2 text-[13px] leading-5 text-white/52">同一种动作表现可能来自活动度、控制、疲劳、负重或个体结构差异。请结合无负重测试与疼痛情况判断。</p></div><h2 className="section-label mt-6">引导式检查</h2><ol className="mt-3 space-y-3">{selected.selfChecks.map((check, i) => <li key={check} className="flex gap-3 text-sm leading-6 text-white/62"><span className="font-mono text-xs text-[#b8f55b]">0{i + 1}</span>{check}</li>)}</ol><p className="mt-7 border-t border-white/8 pt-4 text-xs leading-5 text-white/30">若出现锐痛、麻木、明显无力或持续加重，请停止训练并寻求专业评估。</p></>}
           </div>
         </aside>

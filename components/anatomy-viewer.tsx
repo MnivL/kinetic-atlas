@@ -14,7 +14,7 @@ const MUSCLE_FBX_PARTS = [
 const REGIONS_FBX = "/media/anatomy/RegionsOfHumanBody100.fbx";
 const ROLE_HEX: Record<MuscleRole, number> = { primary: 0xff5b45, secondary: 0xf6b84b, stabilizer: 0x4ea7d8 };
 
-interface Props { exercise: Exercise }
+interface Props { exercise: Exercise; playbackPriority?: boolean }
 type FocusMode = "muscles" | "fascia";
 
 function material(color = 0x75817d, opacity = 1) {
@@ -129,10 +129,11 @@ function applyStudyColors(root: THREE.Object3D, exercise: Exercise, detailed = f
   return showFascia;
 }
 
-export function AnatomyViewer({ exercise }: Props) {
+export function AnatomyViewer({ exercise, playbackPriority = false }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const modelRef = useRef<THREE.Object3D | null>(null);
+  const playbackPriorityRef = useRef(playbackPriority);
   const [detailed, setDetailed] = useState(false);
   const [showSurface, setShowSurface] = useState(false);
   const [focusMode, setFocusMode] = useState<FocusMode>("muscles");
@@ -140,6 +141,10 @@ export function AnatomyViewer({ exercise }: Props) {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    playbackPriorityRef.current = playbackPriority;
+  }, [playbackPriority]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -161,7 +166,15 @@ export function AnatomyViewer({ exercise }: Props) {
     controls.target.set(0, .55, 0); controls.enableDamping = true; controls.minDistance = 4.4; controls.maxDistance = 11;
     const model = buildStudyModel(); modelRef.current = model; applyStudyColors(model, exercise); scene.add(model);
     let frame = 0;
-    const animate = () => { controls.update(); renderer.render(scene, camera); frame = requestAnimationFrame(animate); };
+    const animate = () => {
+      // Animated GIF decoding and a full-resolution WebGL loop compete for the main thread/GPU.
+      // Keep the current anatomy frame visible while the instruction panel plays a demonstration.
+      if (!playbackPriorityRef.current) {
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      frame = requestAnimationFrame(animate);
+    };
     animate();
     const resize = () => { camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(host.clientWidth, host.clientHeight); };
     const observer = new ResizeObserver(resize); observer.observe(host);
