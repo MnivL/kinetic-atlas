@@ -1,15 +1,9 @@
 # Exercise media notice
 
-This repository intentionally contains no third-party exercise GIF library.
-For personal local use, the optional media installer stores ExerciseGymGifsDB
-GIFs and its metadata under `public/media/exercises/`. That directory is Git
-ignored and is not part of this repository or its application license.
+This repository does not contain or redistribute the third-party exercise GIF library.
 
-The interface also accepts a local GIF selected by the user; that file stays
-in the browser session and is not uploaded by this application.
+For personal local use, `scripts/download-local-media.ps1` downloads the ExerciseGymGifsDB v1.1.0 index and GIF files into `public/media/exercises/`. That directory is ignored by Git and is not covered by this repository's AGPL license.
 
-Do not commit or redistribute GIFs from ExerciseGymGifsDB without permission
-from the relevant rights holders. Its maintainer states that the repository
-does not own the copyright in those media and cannot grant third-party rights.
+Do not commit, publish, or redistribute those GIF files without permission from the relevant rights holders. The upstream maintainer states that the repository does not own the copyright in the media and cannot grant third-party rights.
 
-Source notice: https://github.com/JahelCuadrado/ExerciseGymGifsDB#descargo-de-responsabilidad
+Upstream notice: https://github.com/JahelCuadrado/ExerciseGymGifsDB#descargo-de-responsabilidad

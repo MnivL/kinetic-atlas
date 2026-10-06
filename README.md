@@ -1,33 +1,120 @@
 # Kinetic Atlas
 
-一个本地优先的训练动作与 3D 解剖学习工具。选择动作后可查看主动肌、辅助肌、稳定肌、动作阶段、常见代偿与引导式自查。
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-5b8def.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.13-43853d.svg)](package.json)
 
-## 本地运行
+Kinetic Atlas 是一个本地优先的健身动作与 3D 解剖学习工具。它把动作 GIF、主肌群、辅助肌群和 Z-Anatomy 精细人体模型放在同一界面中，用于理解动作发力、常见代偿和体态观察思路。
+
+> 本项目用于运动学习与教育，不提供医学诊断。肌肉参与百分比是教学用相对权重，不是 EMG 实测值。
+
+## 功能
+
+- 1334 个动作条目：11 个精编动作与 1323 个本地动作索引。
+- 每个动作直接显示本地 GIF，无需手动导入。
+- 默认加载 Z-Anatomy 高精度肌肉模型，支持旋转、缩放、外层区域和筋膜结构观察。
+- 根据动作的主肌群、辅助肌群和稳定肌高亮 3D 解剖网格。
+- 提供动作阶段、动作要点、常见代偿和引导式体态检查。
+- 完全本地读取动作数据和媒体，运行时不依赖第三方 API。
+- 内置肌群映射审计，验证动作数据与 686 个 FBX 网格的匹配情况。
+
+## 技术栈
+
+- React 19、Next.js 兼容层与 Vinext/Vite
+- Three.js、FBXLoader、OrbitControls
+- TypeScript、Tailwind CSS
+- Cloudflare Workers/Wrangler 本地运行环境
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 22.13 或更高版本
+- npm
+- Windows PowerShell 7（用于一键下载本地媒体）
+
+### 1. 安装依赖
 
 ```powershell
 npm install
+```
+
+### 2. 下载本地模型和 GIF
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/download-local-media.ps1
+```
+
+脚本会下载约 0.40 GiB 的资源到 `public/media/`：
+
+- Z-Anatomy 的 `MuscularSystem100.fbx` 和 `Regions of human body100.fbx`
+- ExerciseGymGifsDB v1.1.0 的动作索引与 1323 个 GIF
+
+媒体目录不会提交到 Git。下载中断后重新运行即可补齐缺失文件。
+
+### 3. 启动开发服务
+
+```powershell
 npm run dev
 ```
 
-## 模型和媒体
+打开 `http://127.0.0.1:3000/`。
 
-- 默认使用轻量级程序化人体模型，确保离线可用。
-- 精细 FBX、动作索引和 GIF 安装在 `public/media/` 后，浏览器从本机读取，不依赖运行时外网。
-- 精细模型加载后可切换筋膜视图，单独观察模型中 fascia、aponeurosis、retinaculum 命名结构。
-- 动作 GIF 通过浏览器本地文件选择器导入，不会上传或写入仓库。
-- 可按需载入 ExerciseGymGifsDB v1.1.0 的 1323 条动作元数据，并粗粒度映射到 3D 肌群；界面最多同时渲染 120 条结果。
-- `npm run catalog:build` 会把本地原始索引转换为 `data/exercises.zh.json`，写入 1323 条中文动作名称、中文动作步骤、器械和肌群映射；应用运行时只读取这个中文本地数据库，不调用外部索引。
-- 第三方 GIF 只在用户点击后按需从本机文件加载；媒体目录被 Git 忽略，来源仓库不授予 GIF 再分发权。
-- 许可边界见 `ANATOMY_ATTRIBUTION.md` 与 `MEDIA_NOTICE.md`。
+### 4. 生产构建
 
-### 安装本地媒体
+```powershell
+npm run build
+npm start
+```
 
-首次安装可运行 `powershell -ExecutionPolicy Bypass -File scripts/download-local-media.ps1`。它会下载约 0.40 GiB 的两个 FBX、动作索引和 1323 个 GIF 到 `public/media/`；较大的肌肉 FBX 会自动拆分为小于 25MiB 的本地片段，以满足生产服务的单文件体积限制。该目录不会提交到 Git。中断后重复运行即可只补齐缺失文件。
+生产服务默认运行在 `http://127.0.0.1:8787/`。
 
-## 内容边界
+## 常用命令
 
-肌肉参与比例是用于教学和界面表达的相对权重，不是 EMG 测量值。体态页面展示可能因素和检查思路，不提供医学诊断。
+| 命令 | 说明 |
+| --- | --- |
+| `npm run dev` | 启动开发服务 |
+| `npm run lint` | 运行 ESLint |
+| `npm run build` | 生成生产构建 |
+| `npm start` | 启动本地生产服务 |
+| `npm run catalog:build` | 从本地原始索引重新生成中文动作数据库 |
+| `npm run anatomy:audit` | 扫描 FBX 网格并审计全部动作肌群映射 |
+
+## 数据与肌群映射
+
+中文动作数据库位于 `data/exercises.zh.json` 和 `public/data/exercises.zh.json`。映射过程保留来源记录中的全部主肌群和辅助肌群，并将其解剖别名匹配到 Z-Anatomy 的实际 FBX 网格名称。
+
+```powershell
+npm run anatomy:audit
+```
+
+当前审计基线：1323 条来源动作、3236 条肌肉参与记录、19 类来源肌群、686 个 FBX 网格、0 条未匹配动作。
+
+## 项目结构
+
+```text
+app/                           页面与全局样式
+components/anatomy-viewer.tsx  Three.js 解剖模型与肌群高亮
+lib/exercise-data.ts           精编动作数据与类型
+lib/external-catalog.ts        本地动作转换、翻译和肌群映射
+data/                          生成后的中文动作数据库
+public/data/                   浏览器读取的中文动作数据库
+scripts/                       媒体安装、数据库生成和审计脚本
+.github/                       CI、Issue 与 PR 模板
+```
+
+## 第三方资源与版权
+
+第三方模型和 GIF 不包含在 Git 仓库中，也不属于本项目的 AGPL 代码许可范围。
+
+- 解剖模型归属与许可见 [ANATOMY_ATTRIBUTION.md](ANATOMY_ATTRIBUTION.md)。
+- 动作 GIF 的使用边界见 [MEDIA_NOTICE.md](MEDIA_NOTICE.md)。
+
+请在重新分发任何第三方媒体前自行确认授权。ExerciseGymGifsDB 的维护者明确说明其不拥有相关 GIF 的版权，也无法授予第三方再分发权。
+
+## 贡献
+
+欢迎提交问题、改进文档和修正肌群映射。开始前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。安全问题请按 [SECURITY.md](SECURITY.md) 私下报告，不要创建公开 Issue。
 
 ## 许可
 
-应用代码按 AGPL-3.0-or-later 开源。第三方解剖模型和用户自行导入的动作媒体不属于应用代码许可范围，分别遵循 `ANATOMY_ATTRIBUTION.md` 与 `MEDIA_NOTICE.md`。
+应用源代码采用 [GNU Affero General Public License v3.0 or later](LICENSE)。第三方媒体保持其各自许可和版权状态。

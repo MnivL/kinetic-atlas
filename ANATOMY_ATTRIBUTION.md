@@ -1,14 +1,10 @@
 # Anatomy asset attribution
 
-The optional detailed anatomy view streams model data from the upstream
-Z-Anatomy repository at runtime. No Z-Anatomy FBX file is included in this
-repository.
+The detailed anatomy view uses model files downloaded locally by `scripts/download-local-media.ps1`. The FBX assets are stored under `public/media/anatomy/`, ignored by Git, and are not included in this repository.
 
 - **BodyParts3D — The Database Center for Life Science** — CC BY-SA 2.1 Japan
 - **Z-Anatomy — The open source atlas of anatomy** — CC BY-SA 4.0
 - Upstream: https://github.com/LluisV/Z-Anatomy
 - Model files: `MuscularSystem100.fbx` and `Regions of human body100.fbx`
 
-If converted or modified model files are later committed or redistributed,
-keep this attribution, document the modifications, and distribute those
-derivative assets under the applicable ShareAlike terms.
+The installer splits the large muscular-system FBX into local chunks for serving. If converted, modified, or redistributed model files are published separately, preserve this attribution, document modifications, and follow the applicable ShareAlike terms.
