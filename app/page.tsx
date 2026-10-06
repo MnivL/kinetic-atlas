@@ -28,7 +28,7 @@ export default function Home() {
   const [tab, setTab] = useState<DetailTab>("mechanics");
   const [importedMediaUrl, setImportedMediaUrl] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<Exercise[]>([]);
-  const [catalogState, setCatalogState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [catalogState, setCatalogState] = useState<"idle" | "loading" | "ready" | "error">("loading");
   const allExercises = useMemo(() => [...exercises, ...catalog], [catalog]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -100,6 +100,18 @@ export default function Home() {
     }
   }
 
+  useEffect(() => {
+    let cancelled = false;
+    loadExerciseCatalog().then((items) => {
+      if (cancelled) return;
+      setCatalog(items);
+      setCatalogState("ready");
+    }).catch(() => {
+      if (!cancelled) setCatalogState("error");
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   function importMedia(file?: File) {
     if (!file) return;
     setImportedMediaUrl((current) => {
@@ -132,7 +144,7 @@ export default function Home() {
               {catalogState === "loading" ? <LoaderCircle className="animate-spin" size={14} /> : <Database size={14} />}
               {catalogState === "ready" ? `公共索引已载入 · ${catalog.length} 条` : catalogState === "loading" ? "正在载入动作索引…" : catalogState === "error" ? "载入失败 · 点击重试" : "载入 1323 动作公共索引"}
             </button>
-            <p className="mt-2 text-[10px] leading-4 text-white/25">读取本地动作索引；GIF 按需从本机加载。</p>
+            <p className="mt-2 text-[10px] leading-4 text-white/25">启动时自动载入本地 1323 条目录；GIF 与肌群映射均来自本机数据。</p>
           </div>
           <div className="flex items-center justify-between px-4 pb-3 text-xs text-white/35"><span>动作库</span><span>{visibleExercises.length}{filtered.length > visibleExercises.length ? ` / ${filtered.length}` : ""} 项</span></div>
           <nav className="rail-scroll min-h-0 flex-1 px-2 pb-5" aria-label="动作列表">
@@ -173,7 +185,7 @@ export default function Home() {
             {([["mechanics", "发力"], ["form", "动作"], ["posture", "体态"]] as Array<[DetailTab, string]>).map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={`border-b-2 px-2 py-3 text-sm transition ${tab === id ? "border-[#b8f55b] text-white" : "border-transparent text-white/35 hover:text-white/65"}`}>{label}</button>)}
           </div>
           <div className="detail-scroll p-5">
-            {tab === "mechanics" && <><h2 className="section-label">肌肉参与</h2><ul className="mt-2">{[...selected.muscles].sort((a, b) => b.activation - a.activation).map((m) => <MuscleRow key={m.id} muscle={m} />)}</ul><h2 className="section-label mt-7">动作阶段</h2><ol className="mt-3 space-y-3">{selected.phases.map((phase, i) => <li key={phase.name} className="grid grid-cols-[26px_1fr] gap-3"><span className="grid h-6 w-6 place-items-center rounded-full border border-white/10 text-[11px] text-white/45">{i + 1}</span><div><p className="text-sm font-medium">{phase.name}</p><p className="mt-1 text-[13px] leading-5 text-white/46">{phase.description}</p></div></li>)}</ol></>}
+            {tab === "mechanics" && <><h2 className="section-label">肌肉参与</h2>{selected.reviewStatus === "catalog" && <p className="mt-2 text-[11px] leading-4 text-white/35">主肌群取自动作 GIF 的本地目录分类；辅助肌群取自同一条本地索引记录，三维模型按解剖名称匹配。</p>}<ul className="mt-2">{[...selected.muscles].sort((a, b) => b.activation - a.activation).map((m) => <MuscleRow key={m.id} muscle={m} />)}</ul><h2 className="section-label mt-7">动作阶段</h2><ol className="mt-3 space-y-3">{selected.phases.map((phase, i) => <li key={phase.name} className="grid grid-cols-[26px_1fr] gap-3"><span className="grid h-6 w-6 place-items-center rounded-full border border-white/10 text-[11px] text-white/45">{i + 1}</span><div><p className="text-sm font-medium">{phase.name}</p><p className="mt-1 text-[13px] leading-5 text-white/46">{phase.description}</p></div></li>)}</ol></>}
             {tab === "form" && <>
               {demonstrationUrl && <section className="mb-7">
                 <div className="flex items-center justify-between gap-3"><h2 className="section-label">动作演示</h2><span className="text-[10px] text-white/30">本地 GIF</span></div>
